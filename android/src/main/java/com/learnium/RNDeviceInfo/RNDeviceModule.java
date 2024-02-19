@@ -137,10 +137,13 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
     initializeHeadphoneConnectionReceiver();
   }
 
-  private void initializeHeadphoneConnectionReceiver() {
+private void initializeHeadphoneConnectionReceiver() {
     IntentFilter filter = new IntentFilter();
     filter.addAction(AudioManager.ACTION_HEADSET_PLUG);
-    filter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+    filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
+    filter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
+    filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+    filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
 
     headphoneConnectionReceiver = new BroadcastReceiver() {
       @Override
@@ -151,7 +154,8 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
     };
 
     getReactApplicationContext().registerReceiver(headphoneConnectionReceiver, filter);
-  }
+}
+
 
 
   @Override
@@ -627,13 +631,26 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void isLocationEnabled(Promise p) { p.resolve(isLocationEnabledSync()); }
 
-  @ReactMethod(isBlockingSynchronousMethod = true)
-  public boolean isHeadphonesConnectedSync() {
-    AudioManager audioManager = (AudioManager)getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-    return audioManager.isWiredHeadsetOn() || audioManager.isBluetoothA2dpOn();
-  }
-  @ReactMethod
-  public void isHeadphonesConnected(Promise p) {p.resolve(isHeadphonesConnectedSync());}
+@ReactMethod(isBlockingSynchronousMethod = true)
+public boolean isHeadphonesConnectedSync() {
+    AudioManager audioManager = (AudioManager) getReactApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+    AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+    for (AudioDeviceInfo device : devices) {
+        if (device.getType() == AudioDeviceInfo.TYPE_WIRED_HEADPHONES
+                || device.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET
+                || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+                || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
+            return true;
+        }
+    }
+    return false;
+}
+
+@ReactMethod
+public void isHeadphonesConnected(Promise p) {
+    p.resolve(isHeadphonesConnectedSync());
+}
+
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   public WritableMap getAvailableLocationProvidersSync() {
