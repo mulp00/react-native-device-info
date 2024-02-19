@@ -32,6 +32,10 @@ import android.app.ActivityManager;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraManager;
 
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHeadset;
+import android.media.AudioDeviceInfo;
+
 import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.Arguments;
